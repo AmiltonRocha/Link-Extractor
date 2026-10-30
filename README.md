@@ -103,22 +103,22 @@ Cada usuário virtual realiza uma sequência de **10 invocações** ao serviço 
 ```python
 from locust import HttpUser, task, between
 
-# 10 URLs diferentes para cada usuário virtual
+# 10 URLs brasileiras — os mesmos sites testados manualmente
 URLS_TESTE = [
-    "https://www.docker.com",
-    "https://www.python.org",
-    "https://www.ruby-lang.org",
-    "https://flask.palletsprojects.com",
-    "https://redis.io",
-    "https://www.github.com",
-    "https://www.nginx.com",
-    "https://www.mysql.com",
-    "https://www.php.net",
-    "https://www.apache.org",
+    "https://www.opovo.com.br/",
+    "https://www.folha.uol.com.br/",
+    "https://www.gov.br/pt-br",
+    "https://www.cnnbrasil.com.br/",
+    "https://abc.com/",
+    "https://open.spotify.com/intl-pt",
+    "https://www.claro.com.br/",
+    "https://github.com/",
+    "https://diariodonordeste.verdesmares.com.br/",
+    "https://www.uol.com.br/",
 ]
 
 class LinkExtractorUser(HttpUser):
-    # Espera entre 0.5 e 1.5 segundos entre cada ação (como um humano)
+    # Espera entre 0.5 e 1.5 segundos entre cada sequência de 10 URLs
     wait_time = between(0.5, 1.5)
 
     @task
@@ -185,26 +185,32 @@ Isso garante que cada requisição precise extrair os links diretamente da URL (
 
 ## Testes Manuais — Extração de Links
 
-Antes dos testes de carga, foram realizados testes manuais para verificar a correta extração de links de diferentes sites brasileiros e internacionais:
+Antes dos testes de carga, foram realizados testes manuais para verificar a correta extração de links de diferentes sites. Os 10 sites abaixo são os utilizados nos testes de carga (10 invocações por usuário virtual):
 
-| URL | Total de Links Extraídos |
-|---|---|
-| https://www.opovo.com.br/ | 169 |
-| https://www.folha.uol.com.br/ | 772 |
-| https://www.gov.br/pt-br | 261 |
-| https://www.cnnbrasil.com.br/ | 437 |
-| https://abc.com/ | 302 |
-| https://open.spotify.com/intl-pt | 92 |
-| https://www.claro.com.br/ | 264 |
+| # | URL | Total de Links Extraídos |
+|---|---|---|
+| 1 | https://www.opovo.com.br/ | 169 |
+| 2 | https://www.folha.uol.com.br/ | 772 |
+| 3 | https://www.gov.br/pt-br | 261 |
+| 4 | https://www.cnnbrasil.com.br/ | 437 |
+| 5 | https://abc.com/ | 302 |
+| 6 | https://open.spotify.com/intl-pt | 92 |
+| 7 | https://www.claro.com.br/ | 264 |
+| 8 | https://github.com/ | 146 |
+| 9 | https://diariodonordeste.verdesmares.com.br/ | 139 |
+| 10 | https://www.uol.com.br/ | 452 |
 
 ### Observações sobre os testes manuais
 
 - **folha.uol.com.br** (772 links): site de notícias com muitas seções e artigos relacionados
+- **uol.com.br** (452 links): portal de notícias com menu extenso
 - **cnnbrasil.com.br** (437 links): portal de notícias com menu extenso
 - **abc.com** (302 links): site de entretenimento com muitos links de séries e programas
 - **gov.br** (261 links): portal do governo com serviços e informações
 - **claro.com.br** (264 links): site corporativo com produtos e serviços
 - **opovo.com.br** (169 links): jornal regional com notícias
+- **github.com** (146 links): plataforma de desenvolvimento
+- **diariodonordeste.verdesmares.com.br** (139 links): jornal regional
 - **open.spotify.com** (92 links): menor quantidade — página mais enxuta e dinâmica
 
 Esses testes confirmam que o serviço de extração funciona corretamente com diferentes tipos de páginas web.
@@ -235,16 +241,43 @@ Exemplo: `tpython_com_cache_u50_stats.csv`
 
 ## Resultados dos Testes
 
-### Resultados Rápidos (Validação)
+**16 execuções completas** — 2 versões (Python/Ruby) × 2 modos de cache × 4 níveis de usuários (10, 50, 100, 200), cada teste com duração de 30s.
 
-Testes de validação com 2 usuários virtuais por 10 segundos:
+### Python (Flask) — Com cache
 
-| API | Requisições | Tempo Médio | P95 | RPS |
-|---|---|---|---|---|
-| **Python (Flask)** | 240 | 3 ms | 6 ms | ~24/s |
-| **Ruby (Sinatra)** | 180 | 6 ms | 43 ms | ~20/s |
+| Usuários | Requisições | Falhas | Tempo médio (ms) | Mediana (ms) | P95 (ms) | RPS |
+|---|---|---|---|---|---|---|
+| 10 | 2.117 | 0 | 37,8 | 3 | 7 | 72,9 |
+| 50 | 12.588 | 0 | 7,7 | 4 | 22 | 433,5 |
+| 100 | 10.960 | 0 | 122,2 | 140 | 260 | 373,6 |
+| 200 | 17.010 | 0 | 136,7 | 51 | 400 | 562,0 |
 
-**Observação**: A API Python teve melhor desempenho médio e menor P95.
+### Python (Flask) — Sem cache
+
+| Usuários | Requisições | Falhas | Tempo médio (ms) | Mediana (ms) | P95 (ms) | RPS |
+|---|---|---|---|---|---|---|
+| 10 | 2.240 | 0 | 30,5 | 2 | 6 | 77,3 |
+| 50 | 5.311 | 0 | 153,3 | 4 | 1.000 | 182,8 |
+| 100 | 6.818 | 0 | 258,9 | 20 | 1.500 | 234,5 |
+| 200 | 1.998 | **36** | **1.944,4** | 1.200 | **5.900** | 66,5 |
+
+### Ruby (Sinatra) — Com cache
+
+| Usuários | Requisições | Falhas | Tempo médio (ms) | Mediana (ms) | P95 (ms) | RPS |
+|---|---|---|---|---|---|---|
+| 10 | 2.050 | **10** | 38,5 | 2 | 6 | 70,7 |
+| 50 | 13.210 | 0 | **2,7** | 2 | 6 | 455,7 |
+| 100 | 22.981 | 0 | 6,2 | 5 | 16 | 791,7 |
+| 200 | 23.135 | 0 | 6,8 | 5 | 18 | **796,7** |
+
+### Ruby (Sinatra) — Sem cache
+
+| Usuários | Requisições | Falhas | Tempo médio (ms) | Mediana (ms) | P95 (ms) | RPS |
+|---|---|---|---|---|---|---|
+| 10 | 2.480 | 0 | 15,8 | 2 | 6 | 85,6 |
+| 50 | 10.345 | 0 | 31,9 | 2 | 13 | 356,2 |
+| 100 | 20.818 | 0 | 18,2 | 5 | 21 | 716,3 |
+| 200 | 19.711 | 0 | 25,3 | 6 | 29 | 678,3 |
 
 ### Como executar os testes completos
 
@@ -294,14 +327,39 @@ Cada gráfico mostra 5 painéis:
 
 Os gráficos ficam em `locust/resultados/graficos/`.
 
+### Gráficos gerados
+
+#### Python vs Ruby — Com cache
+
+![Comparaçao com cache](locust/resultados/graficos/comparacao_com_cache.png)
+
+#### Python vs Ruby — Sem cache
+
+![Comparação sem cache](locust/resultados/graficos/comparacao_sem_cache.png)
+
+#### Python — Com vs Sem cache
+
+![Python com vs sem cache](locust/resultados/graficos/cache_python.png)
+
+#### Ruby — Com vs Sem cache
+
+![Ruby com vs sem cache](locust/resultados/graficos/cache_ruby.png)
+
 ---
 
-## Conclusões Esperadas
+## Análise dos Resultados
 
-1. **Cache acelera extrações repetidas**: com Redis ativo, requisições para URLs já vistas devem ter tempo de resposta menor
-2. **Python vs Ruby**: comparar qual versão do serviço de extração tem melhor desempenho
-3. **Escalabilidade**: observar como o tempo de resposta e a vazão (RPS) se comportam ao aumentar de 10 para 200 usuários virtuais
-4. **Limitações**: como todas as versões rodam na mesma máquina, o gargalo pode ser a CPU disponível
+1. **Ruby (Sinatra) superou o Python (Flask) em todos os cenários**: com cache, o Ruby chegou a **796 RPS** com tempo médio de apenas **6,8 ms** em 200 usuários, enquanto o Python teve no máximo **562 RPS** e **136,7 ms**. Sem cache a diferença é ainda maior — o Ruby manteve média entre 15 e 32 ms, enquanto o Python passou de **1,9 s com 36 falhas** em 200 usuários.
+
+2. **O cache fez grande diferença no Python**: com 200 usuários, o modo com cache obteve 17.010 requisições sem falhas, contra apenas 1.998 requisições e 36 falhas no modo sem cache. O P95 caiu de 5.900 ms para 400 ms.
+
+3. **No Ruby o efeito do cache foi menor**: o serviço já era tão rápido que extrair direto das páginas não foi gargalo — a mediana se manteve em 2–6 ms nos dois modos. Isso mostra que a implementação Ruby/otimizada extrai as páginas de forma eficiente mesmo sem cache.
+
+4. **Escalabilidade**: o Ruby manteve estabilidade de 10 a 200 usuários (RPS estável em ~700–800). O Python apresentou comportamento irregular (queda de RPS em 50 e 100 usuários no modo sem cache), indicando maior sensibilidade à concorrência.
+
+5. **Falhas**: apenas 2 cenários apresentaram falhas — Python sem cache com 200 usuários (36 falhas, provavelmente timeouts ao extrair páginas grandes) e Ruby com cache com 10 usuários (10 falhas, possivelmente URLs com bloqueio de acesso durante a subida dos usuários).
+
+6. **Limitação do ambiente**: todos os serviços rodam na mesma máquina, e a CPU ficou acima de 90% em alguns testes, o que pode ter influenciado os tempos de resposta observados.
 
 ---
 
@@ -329,4 +387,4 @@ A apresentação deve conter:
 | Testar com e sem cache | `FLUSHALL` no Redis antes de cada teste | ✓ |
 | Armazenar métricas em arquivo | CSVs em `locust/resultados/` | ✓ |
 | Gráficos para análise e visualização | `gerar_graficos.py` → `graficos/` | ✓ |
-| Testes manuais de extração | 7 sites testados (tabela acima) | ✓ |
+| Testes manuais de extração | 10 sites testados (tabela acima) | ✓ |

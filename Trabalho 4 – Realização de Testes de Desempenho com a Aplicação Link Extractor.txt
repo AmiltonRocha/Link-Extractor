@@ -1,0 +1,16 @@
+﻿Realização de Testes de Desempenho com a Aplicação Link Extractor
+Introdução
+O objetivo deste trabalho é realizar testes de desempenho com duas versões da aplicação Link Extractor, utilizada como exemplo no tutorial Application Containerization and Microservice Orchestration, disponível na plataforma Play-with-Docker. 
+Aplicação Link Extractor
+A aplicação Link Extractor oferece um front-end web para extrair e exibir todos os links encontrados na página web cujo endereço (URL) é passado como parâmetro. Além do front-end web, desenvolvido em PHP, a arquitetura da aplicação inclui um serviço de extração de links, desenvolvido em duas versões, Python e Ruby, e um serviço de cache, Redis. A figura abaixo ilustra a arquitetura da aplicação Link Extractor na versão em Python.
+  
+
+O serviço de cache é utilizado para acelerar o tempo de extração dos links pelo serviço de extração de link. Quando o serviço de extração de link recebe uma requisição do front-end com uma determinada URL, ele primeiro verifica se os links contidos nessa URL já estão no cache. Se estiverem, o serviço de extração de link retorna ao front-end a lista de links contidas no cache. Do contrário, o serviço de extração de link extrai os links diretamente da URL indicada, armazena os links extraídos no cache, e então retorna a lista de links ao front-end.
+Atividade
+Realizar testes de desempenho com as duas versões do serviço de extração de link implementadas em Python e Ruby. Para isso, deve-se utilizar uma ferramenta de teste de carga configurável via script, como Locust ou k6. Implemente o comportamento do usuário virtual a ser criado pela ferramenta de teste de carga de modo a realizar uma sequência de 10 invocações ao serviço de extração de link, passando uma URL diferente como parâmetro a cada invocação. Execute diversos cenários de teste variando: (i) a quantidade de usuários virtuais gerados pela ferramenta de teste de carga; (ii) a versão do serviço de extração de link (Python e Ruby); e (iii) o modo de utilização do serviço de cache (com e sem cache). Armazene as métricas de desempenho coletadas pela ferramenta de teste de carga em cada teste (por exemplo, média, mediana, e percentis do tempo de resposta) em um arquivo ou planilha para posterior análise e visualização.
+Entregável
+Apresentação no Google Slides contendo:
+1. Nomes e números de matrículas dos membros da equipe que fizeram o trabalho
+2. Descrição da ferramenta de teste de carga utilizada, incluindo o script de configuração definido para cada usuário virtual
+3. Descrição dos cenários de teste avaliados
+4. Gráficos ilustrando os resultados dos testes em cada cenário

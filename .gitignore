@@ -1,0 +1,13 @@
+# Código original do Link Extractor (sub-repositório)
+linkextractor/
+
+# Resultados dos testes
+locust/resultados/*.csv
+locust/resultados/graficos/
+
+# Python
+__pycache__/
+*.pyc
+
+# Docker
+*.log

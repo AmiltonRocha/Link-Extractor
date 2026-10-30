@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # API Python (step5)
+  api-python:
+    image: linkextractor-api:python
+    build: ./linkextractor/step5/api
+    ports:
+      - "5000:5000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - lenet
+
+  # API Ruby (step6)
+  api-ruby:
+    image: linkextractor-api:ruby
+    build: ./linkextractor/step6/api
+    ports:
+      - "4567:4567"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./linkextractor/step6/logs:/app/logs
+    networks:
+      - lenet
+
+  # Front-end PHP
+  web:
+    image: linkextractor-web:php
+    build: ./linkextractor/step5/www
+    ports:
+      - "8080:80"
+    environment:
+      - API_ENDPOINT=http://api-python:5000/api/
+    networks:
+      - lenet
+
+  # Cache Redis
+  redis:
+    image: redis:alpine
+    networks:
+      - lenet
+
+  # Locust (gerador de carga)
+  locust:
+    image: grubykarol/locust
+    container_name: locust-t4
+    ports:
+      - "8089:8089"
+    environment:
+      ATTACKED_HOST: http://api-python:5000
+      LOCUST_FILE: locustfile.py
+      LOCUST_OPTS: ""
+    volumes:
+      - ./locust:/locust
+    depends_on:
+      - api-python
+      - api-ruby
+    networks:
+      - lenet
+
+networks:
+  lenet:
